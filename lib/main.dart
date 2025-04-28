@@ -1,125 +1,228 @@
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: TaskScreen(),
       title: 'Todoire',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+class TaskScreen extends StatefulWidget {
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  _TaskScreenState createState() => _TaskScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+class _TaskScreenState extends State<TaskScreen> {
+  final Color primaryColor =Color(0xFF4A4380); // head color
+  final Color searchBarColor = Colors.white30; // for search
+  final Color addbutton = Color(0xFF4A4380);     // for add button
+  final Color bottomNavBarColor = Color(0xFF4A4380); // for bot nav bar
+  final Color iconColor = Colors.white;        // for header icons+text
+  final Color bottomIconColor = Colors.white; //  nav bar button
+  final Color checkColor = Color(0xFF4A4380); // Color for the check icon in menu
+  bool _showLabels = true;
+  bool _showCompleted = true;
+  void _handleSort() {
+    print("Sort action triggered!");
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+      body: Column(
+        children: [
+          _buildHeader(context),
+          Expanded(
+            child: Center(
+              child: Text(
+                'Hon mnhot l details',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.black),
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // With lama
+        },
+        child: Icon(Icons.add, size: 30, color: Colors.white),
+        backgroundColor: addbutton, // Use color from State
+        shape: CircleBorder(),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildBottomNavBar(context),
+    );
+  }
+  Widget _buildHeader(BuildContext context) {
+    double topPadding = MediaQuery.of(context).padding.top;
+    final now = DateTime.now();
+    final formattedDate = DateFormat('d MMM').format(now);
+    final String displayDateString = 'Today, $formattedDate';
+
+    return Container(
+      padding: EdgeInsets.only(
+          top: topPadding + 15, left: 20, right: 20, bottom: 20
+      ),
+      decoration: BoxDecoration(
+        color: primaryColor,
+      borderRadius: BorderRadius.only(
+       bottomLeft: Radius.circular(30),
+        bottomRight: Radius.circular(30),
+       ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: Icon(Icons.grid_view_rounded, color: iconColor, size: 28),
+                onPressed: () {}, //with lama or khulud
+              ),
+              Expanded(
+                child: GestureDetector(
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 15),
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                      color: searchBarColor,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: TextField(
+                      style: TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        icon: Icon(Icons.search, color: iconColor.withOpacity(0.8)),
+                        hintText: 'Search',
+                        hintStyle: TextStyle(color: iconColor.withOpacity(0.8)),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  onTap: () {
+                    //later
+                  },
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_horiz, color: iconColor, size: 28),
+                color: Colors.white, // Menu background
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                elevation: 4,
+                onSelected: (String result) {
+                  setState(() {
+                    switch (result) {
+                      case 'show_label':
+                        _showLabels = !_showLabels;
+                        break;
+                      case 'show_completed':
+                        _showCompleted = !_showCompleted;
+                        break;
+                      case 'sort':
+                        _handleSort();
+                        break;
+                    }
+                  });
+                },
+                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  _buildPopupMenuItem(
+                    context: context,
+                    icon: Icons.label_outline,
+                    title: 'Show Label',
+                    value: 'show_label',
+                    showCheck: _showLabels,
+                    checkColor: checkColor,
+                  ),
+                  _buildPopupMenuItem(
+                    context: context,
+                    icon: Icons.check_circle_outline,
+                    title: 'Show Completed',
+                    value: 'show_completed',
+                    showCheck: _showCompleted,
+                    checkColor: checkColor,
+                  ),
+                  _buildPopupMenuItem(
+                    context: context,
+                    icon: Icons.sort,
+                    title: 'Sort',
+                    value: 'sort',
+                  ),
+                ],
+              ),
+
+            ],
+          ),
+          SizedBox(height: 20),
+          Text(
+            displayDateString,
+            style: TextStyle(color: iconColor.withOpacity(0.8), fontSize: 14),
+          ),
+          SizedBox(height: 5),
+          Text(
+            'My tasks',
+            style: TextStyle(
+                color: iconColor, fontSize: 28, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+  PopupMenuItem<String> _buildPopupMenuItem({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String value,
+    bool showCheck = false,
+    Color? checkColor,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, color: Color(0xFF4A4380)), // Menu item icon color
+          SizedBox(width: 12),
+          Text(title),
+          Spacer(),
+          if (showCheck)
+            Icon(Icons.check,),
+        ],
+      ),
+    );
+  }
+  Widget _buildBottomNavBar(BuildContext context) {
+    return BottomAppBar(
+      color: bottomNavBarColor,
+      shape: CircularNotchedRectangle(),
+      notchMargin: 8.0,
+      elevation: 8.0,
+      child: Container(
+        height: 65,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(Icons.list_alt_outlined, color: bottomIconColor, size: 30),
+              onPressed: () {},
+            ),
+            SizedBox(width: 40),
+            IconButton(
+              icon: Icon(Icons.calendar_today_outlined, color: bottomIconColor, size: 28),
+              onPressed: () {},
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
