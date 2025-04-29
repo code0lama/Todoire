@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/rendering.dart';
 
 void main() {
+  debugPaintSizeEnabled = false;
   runApp(MyApp());
 }
 
@@ -32,6 +34,8 @@ class _TaskScreenState extends State<TaskScreen> {
   bool _showLabels = true;
   bool _showCompleted = true;
   List<String> tasks = [];
+  int? selectedTaskIndex;
+  Set<int> completedTasks = {};
 
   void _handleSort() {
     print("Sort action triggered!");
@@ -41,46 +45,54 @@ class _TaskScreenState extends State<TaskScreen> {
     String newTask = '';
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: 'What would you like to do?',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'What would you like to do?',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
+                    onChanged: (value) {
+                      newTask = value;
+                    },
                   ),
-                  onChanged: (value) {
-                    newTask = value;
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: () {
+                    if (newTask.trim().isNotEmpty) {
+                      setState(() {
+                        tasks.add(newTask.trim());
+                      });
+                      Navigator.pop(context);
+                    }
                   },
-                ),
-              ),
-              SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: () {
-                  if (newTask.trim().isNotEmpty) {
-                    setState(() {
-                      tasks.add(newTask.trim());
-                    });
-                    Navigator.pop(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  shape: CircleBorder(),
-                  padding: EdgeInsets.all(14),
-                  backgroundColor: primaryColor,
-                ),
-                child: Icon(Icons.arrow_upward, color: Colors.white),
-              )
-            ],
+                  style: ElevatedButton.styleFrom(
+                    shape: CircleBorder(),
+                    padding: EdgeInsets.all(14),
+                    backgroundColor: primaryColor,
+                  ),
+                  child: Icon(Icons.arrow_upward, color: Colors.white),
+                )
+              ],
+            ),
           ),
         );
       },
@@ -107,11 +119,32 @@ class _TaskScreenState extends State<TaskScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 4,
-                  margin: EdgeInsets.symmetric(vertical: 8),
+                  margin: EdgeInsets.symmetric(vertical: 6),
                   child: ListTile(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                    leading: Checkbox(
+                      value: completedTasks.contains(index),
+                      onChanged: (bool? value) {
+                        setState(() {
+                          if (value == true) {
+                            completedTasks.add(index);
+                          } else {
+                            completedTasks.remove(index);
+                          }
+                        });
+                      },
+                      activeColor: checkColor,
+                    ),
                     title: Text(
                       tasks[index],
-                      style: TextStyle(color: Colors.black87),
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        decoration: completedTasks.contains(index)
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
                     ),
                   ),
                 );
