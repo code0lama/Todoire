@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 void main() {
   runApp(MyApp());
 }
@@ -14,54 +15,124 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
 class TaskScreen extends StatefulWidget {
   @override
   _TaskScreenState createState() => _TaskScreenState();
 }
 
 class _TaskScreenState extends State<TaskScreen> {
-  final Color primaryColor =Color(0xFF4A4380); // head color
-  final Color searchBarColor = Colors.white30; // for search
-  final Color addbutton = Color(0xFF4A4380);     // for add button
-  final Color bottomNavBarColor = Color(0xFF4A4380); // for bot nav bar
-  final Color iconColor = Colors.white;        // for header icons+text
-  final Color bottomIconColor = Colors.white; //  nav bar button
-  final Color checkColor = Color(0xFF4A4380); // Color for the check icon in menu
+  final Color primaryColor = Color(0xFF4A4380);
+  final Color searchBarColor = Colors.white30;
+  final Color addbutton = Color(0xFF4A4380);
+  final Color bottomNavBarColor = Color(0xFF4A4380);
+  final Color iconColor = Colors.white;
+  final Color bottomIconColor = Colors.white;
+  final Color checkColor = Color(0xFF4A4380);
   bool _showLabels = true;
   bool _showCompleted = true;
+  List<String> tasks = [];
+
   void _handleSort() {
     print("Sort action triggered!");
+  }
+
+  void _showAddTaskBottomSheet(BuildContext context) {
+    String newTask = '';
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'What would you like to do?',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    newTask = value;
+                  },
+                ),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  if (newTask.trim().isNotEmpty) {
+                    setState(() {
+                      tasks.add(newTask.trim());
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: CircleBorder(),
+                  padding: EdgeInsets.all(14),
+                  backgroundColor: primaryColor,
+                ),
+                child: Icon(Icons.arrow_upward, color: Colors.white),
+              )
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[300],
       body: Column(
         children: [
           _buildHeader(context),
           Expanded(
-            child: Center(
-              child: Text(
-                'Hon mnhot l details',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black),
-              ),
+            child: tasks.isEmpty
+                ? Center(child: Text('No tasks yet. Tap + to add one!'))
+                : ListView.builder(
+              padding: EdgeInsets.all(20),
+              itemCount: tasks.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    title: Text(
+                      tasks[index],
+                      style: TextStyle(color: Colors.black87),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // With lama
+          _showAddTaskBottomSheet(context);
         },
         child: Icon(Icons.add, size: 30, color: Colors.white),
-        backgroundColor: addbutton, // Use color from State
+        backgroundColor: addbutton,
         shape: CircleBorder(),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: _buildBottomNavBar(context),
     );
   }
+
   Widget _buildHeader(BuildContext context) {
     double topPadding = MediaQuery.of(context).padding.top;
     final now = DateTime.now();
@@ -69,15 +140,13 @@ class _TaskScreenState extends State<TaskScreen> {
     final String displayDateString = 'Today, $formattedDate';
 
     return Container(
-      padding: EdgeInsets.only(
-          top: topPadding + 15, left: 20, right: 20, bottom: 20
-      ),
+      padding: EdgeInsets.only(top: topPadding + 15, left: 20, right: 20, bottom: 20),
       decoration: BoxDecoration(
         color: primaryColor,
-      borderRadius: BorderRadius.only(
-       bottomLeft: Radius.circular(30),
-        bottomRight: Radius.circular(30),
-       ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,40 +154,30 @@ class _TaskScreenState extends State<TaskScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(
-                icon: Icon(Icons.grid_view_rounded, color: iconColor, size: 28),
-                onPressed: () {}, //with lama or khulud
-              ),
+              IconButton(icon: Icon(Icons.grid_view_rounded, color: iconColor, size: 28), onPressed: () {}),
               Expanded(
-                child: GestureDetector(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 15),
-                    padding: EdgeInsets.symmetric(horizontal: 15),
-                    decoration: BoxDecoration(
-                      color: searchBarColor,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: TextField(
-                      style: TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        icon: Icon(Icons.search, color: iconColor.withOpacity(0.8)),
-                        hintText: 'Search',
-                        hintStyle: TextStyle(color: iconColor.withOpacity(0.8)),
-                        border: InputBorder.none,
-                      ),
+                child: Container(
+                  margin: EdgeInsets.symmetric(horizontal: 15),
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  decoration: BoxDecoration(
+                    color: searchBarColor,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: TextField(
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      icon: Icon(Icons.search, color: iconColor.withAlpha((0.8 * 255).toInt())),
+                      hintText: 'Search',
+                      hintStyle: TextStyle(color: iconColor.withAlpha((0.8 * 255).toInt())),
+                      border: InputBorder.none,
                     ),
                   ),
-                  onTap: () {
-                    //later
-                  },
                 ),
               ),
               PopupMenuButton<String>(
                 icon: Icon(Icons.more_horiz, color: iconColor, size: 28),
-                color: Colors.white, // Menu background
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
+                color: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                 elevation: 4,
                 onSelected: (String result) {
                   setState(() {
@@ -136,48 +195,22 @@ class _TaskScreenState extends State<TaskScreen> {
                   });
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  _buildPopupMenuItem(
-                    context: context,
-                    icon: Icons.label_outline,
-                    title: 'Show Label',
-                    value: 'show_label',
-                    showCheck: _showLabels,
-                    checkColor: checkColor,
-                  ),
-                  _buildPopupMenuItem(
-                    context: context,
-                    icon: Icons.check_circle_outline,
-                    title: 'Show Completed',
-                    value: 'show_completed',
-                    showCheck: _showCompleted,
-                    checkColor: checkColor,
-                  ),
-                  _buildPopupMenuItem(
-                    context: context,
-                    icon: Icons.sort,
-                    title: 'Sort',
-                    value: 'sort',
-                  ),
+                  _buildPopupMenuItem(context: context, icon: Icons.label_outline, title: 'Show Label', value: 'show_label', showCheck: _showLabels, checkColor: checkColor),
+                  _buildPopupMenuItem(context: context, icon: Icons.check_circle_outline, title: 'Show Completed', value: 'show_completed', showCheck: _showCompleted, checkColor: checkColor),
+                  _buildPopupMenuItem(context: context, icon: Icons.sort, title: 'Sort', value: 'sort'),
                 ],
               ),
-
             ],
           ),
           SizedBox(height: 20),
-          Text(
-            displayDateString,
-            style: TextStyle(color: iconColor.withOpacity(0.8), fontSize: 14),
-          ),
+          Text(displayDateString, style: TextStyle(color: iconColor.withAlpha((0.8 * 255).toInt()), fontSize: 14)),
           SizedBox(height: 5),
-          Text(
-            'My tasks',
-            style: TextStyle(
-                color: iconColor, fontSize: 28, fontWeight: FontWeight.bold),
-          ),
+          Text('My tasks', style: TextStyle(color: iconColor, fontSize: 28, fontWeight: FontWeight.bold)),
         ],
       ),
     );
   }
+
   PopupMenuItem<String> _buildPopupMenuItem({
     required BuildContext context,
     required IconData icon,
@@ -190,16 +223,16 @@ class _TaskScreenState extends State<TaskScreen> {
       value: value,
       child: Row(
         children: [
-          Icon(icon, color: Color(0xFF4A4380)), // Menu item icon color
+          Icon(icon, color: Color(0xFF4A4380)),
           SizedBox(width: 12),
           Text(title),
           Spacer(),
-          if (showCheck)
-            Icon(Icons.check,),
+          if (showCheck) Icon(Icons.check, color: checkColor),
         ],
       ),
     );
   }
+
   Widget _buildBottomNavBar(BuildContext context) {
     return BottomAppBar(
       color: bottomNavBarColor,
@@ -211,15 +244,9 @@ class _TaskScreenState extends State<TaskScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            IconButton(
-              icon: Icon(Icons.list_alt_outlined, color: bottomIconColor, size: 30),
-              onPressed: () {},
-            ),
+            IconButton(icon: Icon(Icons.list_alt_outlined, color: bottomIconColor, size: 30), onPressed: () {}),
             SizedBox(width: 40),
-            IconButton(
-              icon: Icon(Icons.calendar_today_outlined, color: bottomIconColor, size: 28),
-              onPressed: () {},
-            ),
+            IconButton(icon: Icon(Icons.calendar_today_outlined, color: bottomIconColor, size: 28), onPressed: () {}),
           ],
         ),
       ),
