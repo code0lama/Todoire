@@ -4,6 +4,7 @@ import 'TaskModel.dart';
 
 class DashboardScreen extends StatelessWidget {
   final TaskModel taskModel;
+
   const DashboardScreen({super.key, required this.taskModel});
 
   final Color purpleColor = const Color(0xFF4A4380);
@@ -14,82 +15,92 @@ class DashboardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      body: Column(
-        children: [
-          // Header
-          Container(
-            color: purpleColor,
-            padding: const EdgeInsets.only(top: 80, left: 30, right: 30, bottom: 30),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 25,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Color(0xFF4A4380)),
-                ),
-                const SizedBox(width: 15),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      currentDate,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Header
+            Container(
+              color: purpleColor,
+              padding: const EdgeInsets.only(
+                  top: 80, left: 30, right: 30, bottom: 30),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.person, color: Color(0xFF4A4380)),
+                  ),
+                  const SizedBox(width: 15),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentDate,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                    const Text(
-                      "Dashboard",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                      const Text(
+                        "Dashboard",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, '/signup');
-                  },
-                ),
-              ],
+                    ],
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/signup');
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // View Buttons
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 30),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildViewButton(Icons.list, "List", const Color(0xFF4A4380), context),
-                const SizedBox(width: 20),
-                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF4A4380), context),
-              ],
+            // View Buttons
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 20.0, horizontal: 30),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildViewButton(
+                      Icons.list, "List", const Color(0xFF4A4380), context),
+                  const SizedBox(width: 20),
+                  _buildViewButton(Icons.calendar_today_outlined, "Calendar",
+                      const Color(0xFF4A4380), context),
+                ],
+              ),
             ),
-          ),
 
-          // Labels Section
-          _buildSectionTitle("Labels"),
-          _buildLabelGrid([
-            _TagData("Study", Colors.deepPurple, taskModel.countByLabel("Study")),
-            _TagData("Sports", Colors.lightBlue, taskModel.countByLabel("Sports")),
-            _TagData("Work", Colors.yellow, taskModel.countByLabel("Work")),
-            _TagData("Personal", Colors.amber[700]!, taskModel.countByLabel("Personal")),
-          ]),
+            // Labels Section
+            _buildSectionTitle("Labels"),
+            _buildLabelGrid([
+              _TagData(
+                  "Study", Colors.deepPurple, taskModel.countByLabel("Study")),
+              _TagData(
+                  "Sports", Colors.lightBlue, taskModel.countByLabel("Sports")),
+              _TagData("Work", Colors.yellow, taskModel.countByLabel("Work")),
+              _TagData("Personal", Colors.amber[700]!,
+                  taskModel.countByLabel("Personal")),
+            ]),
 
-          // Status Section
-          _buildSectionTitle("Status"),
-          _buildStatusList(),
-        ],
+            // Status Section
+            _buildSectionTitle("Status"),
+            _buildStatusList(),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildViewButton(IconData icon, String label, Color iconColor, BuildContext context) {
+  Widget _buildViewButton(
+      IconData icon, String label, Color iconColor, BuildContext context) {
     return GestureDetector(
       onTap: () {
         if (label == 'List') {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-import 'main.dart';
 import 'TaskModel.dart';
+import 'main.dart';
 
 class CalendarPage extends StatefulWidget {
   final TaskModel taskModel;
@@ -21,6 +21,8 @@ class _CalendarPageState extends State<CalendarPage> {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = Color(0xFF4A4380);
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Column(
@@ -33,13 +35,7 @@ class _CalendarPageState extends State<CalendarPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 8,
-                  offset: Offset(0, 4),
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
             ),
             child: TableCalendar(
               focusedDay: focusedDay,
@@ -52,21 +48,34 @@ class _CalendarPageState extends State<CalendarPage> {
                   focusedDay = focused;
                 });
               },
+              eventLoader: (day) {
+                return widget.taskModel.tasks.where((task) {
+                  final DateTime taskDate = task['date'];
+                  return isSameDay(taskDate, day);
+                }).toList();
+              },
               calendarStyle: CalendarStyle(
                 selectedDecoration: BoxDecoration(
-                  color: Color(0xFF4A4380),
+                  color: primaryColor,
                   shape: BoxShape.circle,
                 ),
                 todayDecoration: BoxDecoration(
                   color: Colors.deepPurple.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
+                markerDecoration: BoxDecoration(
+                  color: primaryColor, // Purple dot
+                  shape: BoxShape.circle,
+                ),
+                markersMaxCount: 1,
+                markersAlignment: Alignment.bottomCenter,
               ),
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
               ),
             ),
+
           ),
           SizedBox(height: 20),
           Divider(),
@@ -80,10 +89,12 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
             ),
           ),
+          SizedBox(height: 10),
+          Expanded(child: _buildTaskCardsForSelectedDate()),
         ],
       ),
       bottomNavigationBar: BottomAppBar(
-        color: Color(0xFF4A4380),
+        color: primaryColor,
         shape: CircularNotchedRectangle(),
         notchMargin: 8.0,
         elevation: 8.0,
@@ -93,20 +104,17 @@ class _CalendarPageState extends State<CalendarPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                icon: Icon(Icons.list_alt_outlined,
-                    color: Colors.white.withOpacity(0.7), size: 30),
+                icon: Icon(Icons.list_alt_outlined, color: Colors.white.withOpacity(0.7), size: 30),
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => TaskScreen(widget.taskModel)),
+                    MaterialPageRoute(builder: (context) => TaskScreen(widget.taskModel)),
                   );
                 },
               ),
               SizedBox(width: 40),
               IconButton(
-                icon: Icon(Icons.calendar_today_outlined,
-                    color: Colors.white, size: 28),
+                icon: Icon(Icons.calendar_today_outlined, color: Colors.white, size: 28),
                 onPressed: () {},
               ),
             ],
@@ -120,32 +128,23 @@ class _CalendarPageState extends State<CalendarPage> {
     double topPadding = MediaQuery.of(context).padding.top;
     final now = DateTime.now();
     final formattedDate = DateFormat('d MMM').format(now);
-    final String displayDateString = 'Today, $formattedDate';
 
     return Container(
-      padding: EdgeInsets.only(
-        top: topPadding + 15,
-        left: 20,
-        right: 20,
-        bottom: 20,
-      ),
+      padding: EdgeInsets.only(top: topPadding + 15, left: 20, right: 20, bottom: 20),
       decoration: BoxDecoration(
         color: Color(0xFF4A4380),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.grid_view_rounded,
-                    color: Colors.white, size: 28),
-                onPressed: () {},
+                icon: Icon(Icons.grid_view_rounded, color: Colors.white, size: 28),
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, '/dashboard');
+                },
               ),
               Expanded(
                 child: Container(
@@ -158,11 +157,9 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: TextField(
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      icon: Icon(Icons.search,
-                          color: Colors.white.withOpacity(0.8)),
-                      hintText: 'Search',
-                      hintStyle:
-                          TextStyle(color: Colors.white.withOpacity(0.8)),
+                      icon: Icon(Icons.search, color: Colors.white.withOpacity(0.8)),
+                      hintText: 'Search Tasks...',
+                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
                       border: InputBorder.none,
                     ),
                   ),
@@ -170,28 +167,14 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               PopupMenuButton<String>(
                 icon: Icon(Icons.more_horiz, color: Colors.white, size: 28),
-                color: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                elevation: 4,
                 onSelected: (String result) {
                   setState(() {
-                    switch (result) {
-                      case 'show_label':
-                        _showLabels = !_showLabels;
-                        break;
-                      case 'show_completed':
-                        _showCompleted = !_showCompleted;
-                        break;
-                      case 'sort':
-                        // Add sort logic here
-                        break;
-                    }
+                    if (result == 'show_label') _showLabels = !_showLabels;
+                    if (result == 'show_completed') _showCompleted = !_showCompleted;
                   });
                 },
-                itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                  PopupMenuItem<String>(
+                itemBuilder: (context) => [
+                  PopupMenuItem(
                     value: 'show_label',
                     child: Row(
                       children: [
@@ -199,32 +182,19 @@ class _CalendarPageState extends State<CalendarPage> {
                         SizedBox(width: 12),
                         Text('Show Label'),
                         Spacer(),
-                        if (_showLabels)
-                          Icon(Icons.check, color: Color(0xFF4A4380)),
+                        if (_showLabels) Icon(Icons.check, color: Color(0xFF4A4380)),
                       ],
                     ),
                   ),
-                  PopupMenuItem<String>(
+                  PopupMenuItem(
                     value: 'show_completed',
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_outline,
-                            color: Color(0xFF4A4380)),
+                        Icon(Icons.check_circle_outline, color: Color(0xFF4A4380)),
                         SizedBox(width: 12),
                         Text('Show Completed'),
                         Spacer(),
-                        if (_showCompleted)
-                          Icon(Icons.check, color: Color(0xFF4A4380)),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem<String>(
-                    value: 'sort',
-                    child: Row(
-                      children: [
-                        Icon(Icons.sort, color: Color(0xFF4A4380)),
-                        SizedBox(width: 12),
-                        Text('Sort'),
+                        if (_showCompleted) Icon(Icons.check, color: Color(0xFF4A4380)),
                       ],
                     ),
                   ),
@@ -233,16 +203,87 @@ class _CalendarPageState extends State<CalendarPage> {
             ],
           ),
           SizedBox(height: 20),
-          Text(displayDateString,
-              style: TextStyle(color: Colors.white70, fontSize: 14)),
+          Text('Today, $formattedDate', style: TextStyle(color: Colors.white70, fontSize: 14)),
           SizedBox(height: 5),
-          Text('Calendar',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold)),
+          Text('Calendar', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
         ],
       ),
     );
+  }
+
+  Widget _buildTaskCardsForSelectedDate() {
+    final Color primaryColor = Color(0xFF4A4380);
+    final selectedDate = this.selectedDay ?? DateTime.now();
+
+    final tasks = widget.taskModel.tasks.where((task) {
+      final taskDate = task['date'] as DateTime;
+      return isSameDay(taskDate, selectedDate);
+    }).toList();
+
+    if (tasks.isEmpty) {
+      return Center(child: Text("No tasks for this date."));
+    }
+
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      itemCount: tasks.length,
+      itemBuilder: (context, index) {
+        final task = tasks[index];
+        final labelColor = _getLabelColor(task['label']);
+        return Card(
+          color: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 3,
+          margin: EdgeInsets.symmetric(vertical: 8),
+          child: ListTile(
+            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical:2),
+            title: Text(
+              task['title'],
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            subtitle: Text(
+              DateFormat('dd MMM yyyy').format(task['date']),
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            ),
+            trailing: _showLabels
+                ? Container(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: labelColor.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                task['label'],
+                style: TextStyle(
+                  color: labelColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            )
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
+  Color _getLabelColor(String label) {
+    switch (label) {
+      case 'Study':
+        return Colors.teal;
+      case 'Sports':
+        return Colors.orange;
+      case 'Work':
+        return Colors.indigo;
+      case 'Personal':
+        return Colors.pink;
+      default:
+        return Colors.grey;
+    }
   }
 }

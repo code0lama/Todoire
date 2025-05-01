@@ -9,9 +9,6 @@ import 'dashboard-screen.dart';
 import 'TaskModel.dart';
 import 'package:flutter/foundation.dart';
 
-
-
-
 void main() {
   debugPaintSizeEnabled = false;
   runApp(MyApp());
