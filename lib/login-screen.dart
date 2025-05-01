@@ -14,8 +14,10 @@ class LoginScreen extends StatelessWidget {
             const SizedBox(height: 80),
             _logo(),
             const SizedBox(height: 30),
-            const Text("Welcome back!",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Center(
+              child: const Text("Welcome back!",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            ),
             const SizedBox(height: 30),
             TextField(
               controller: TextEditingController(text: "name@gmail.com"),

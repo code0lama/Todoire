@@ -13,15 +13,18 @@ class OnboardingScreen extends StatelessWidget {
           Center(
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(40),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4A4380),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: const Icon(Icons.check, color: Colors.white, size: 65),
+              Container(
+              width: 250,
+              height: 230,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25),
+                image: const DecorationImage(
+                  image: AssetImage('photos/cover.jpg'),
+                  fit: BoxFit.cover,
                 ),
-                const SizedBox(height: 30),
+              ),
+            ),
+               const SizedBox(height: 30),
                 const Text(
                   "Get things done.",
                   style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -48,14 +51,22 @@ class OnboardingScreen extends StatelessWidget {
             alignment: Alignment.bottomRight,
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: GestureDetector(
-                onTap: () {
+              child: ElevatedButton.icon(
+                onPressed: () {
                   Navigator.pushReplacementNamed(context, '/signup');
                 },
-                child: CircleAvatar(
-                  backgroundColor: const Color(0xFF4A4380),
-                  radius: 40,
-                  child: const Icon(Icons.arrow_forward, color: Colors.white),
+                icon: const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                label: const Text(
+                  "Continue",
+                  style: TextStyle(color: Colors.white),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF4A4380),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 4,
                 ),
               ),
             ),

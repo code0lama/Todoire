@@ -53,9 +53,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
               const SizedBox(height: 80),
               _logo(),
               const SizedBox(height: 30),
-              const Text(
-                "Let's get started!",
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Center(
+                child: const Text(
+                  "Let's get started!",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 30),
               _textField(
