@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'TaskModel.dart';
 
 class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+  final TaskModel taskModel;
+  const DashboardScreen({super.key, required this.taskModel});
 
   final Color purpleColor = const Color(0xFF4A4380);
 
@@ -47,7 +49,6 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-
                 IconButton(
                   icon: const Icon(Icons.logout, color: Colors.white),
                   onPressed: () {
@@ -58,16 +59,15 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
 
-
           // View Buttons
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 30),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildViewButton(Icons.list, "List", const Color(0xFF4A4380),context,),
+                _buildViewButton(Icons.list, "List", const Color(0xFF4A4380), context),
                 const SizedBox(width: 20),
-                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF4A4380),context),
+                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF4A4380), context),
               ],
             ),
           ),
@@ -75,10 +75,10 @@ class DashboardScreen extends StatelessWidget {
           // Labels Section
           _buildSectionTitle("Labels"),
           _buildLabelGrid([
-            _TagData("Study", Colors.deepPurple, 5),
-            _TagData("Sports", Colors.lightBlue, 2),
-            _TagData("Work", Colors.yellow, 2),
-            _TagData("Personal", Colors.amber[700]!, 2),
+            _TagData("Study", Colors.deepPurple, taskModel.countByLabel("Study")),
+            _TagData("Sports", Colors.lightBlue, taskModel.countByLabel("Sports")),
+            _TagData("Work", Colors.yellow, taskModel.countByLabel("Work")),
+            _TagData("Personal", Colors.amber[700]!, taskModel.countByLabel("Personal")),
           ]),
 
           // Status Section
@@ -118,7 +118,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(25, 20, 25, 10),
@@ -130,8 +129,6 @@ class DashboardScreen extends StatelessWidget {
           ),
           const Spacer(),
           const Icon(Icons.keyboard_arrow_down),
-          const SizedBox(width: 8),
-          const Icon(Icons.add_circle_outline),
         ],
       ),
     );
@@ -216,7 +213,6 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _buildStatusList() {
     return Padding(

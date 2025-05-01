@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
 import 'main.dart';
+import 'TaskModel.dart';
 
 class CalendarPage extends StatefulWidget {
+  final TaskModel taskModel;
+
+  const CalendarPage({super.key, required this.taskModel});
+
   @override
   _CalendarPageState createState() => _CalendarPageState();
 }
@@ -22,7 +27,8 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           _buildHeader(context),
           SizedBox(height: 20),
-          Container( margin: EdgeInsets.symmetric(horizontal: 20),
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 20),
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -87,17 +93,20 @@ class _CalendarPageState extends State<CalendarPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                icon: Icon(Icons.list_alt_outlined, color: Colors.white.withOpacity(0.7), size: 30),
+                icon: Icon(Icons.list_alt_outlined,
+                    color: Colors.white.withOpacity(0.7), size: 30),
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => TaskScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => TaskScreen(widget.taskModel)),
                   );
                 },
               ),
               SizedBox(width: 40),
               IconButton(
-                icon: Icon(Icons.calendar_today_outlined, color: Colors.white, size: 28),
+                icon: Icon(Icons.calendar_today_outlined,
+                    color: Colors.white, size: 28),
                 onPressed: () {},
               ),
             ],
@@ -134,7 +143,8 @@ class _CalendarPageState extends State<CalendarPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.grid_view_rounded, color: Colors.white, size: 28),
+                icon: Icon(Icons.grid_view_rounded,
+                    color: Colors.white, size: 28),
                 onPressed: () {},
               ),
               Expanded(
@@ -148,9 +158,11 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: TextField(
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      icon: Icon(Icons.search, color: Colors.white.withOpacity(0.8)),
+                      icon: Icon(Icons.search,
+                          color: Colors.white.withOpacity(0.8)),
                       hintText: 'Search',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+                      hintStyle:
+                          TextStyle(color: Colors.white.withOpacity(0.8)),
                       border: InputBorder.none,
                     ),
                   ),
@@ -173,7 +185,7 @@ class _CalendarPageState extends State<CalendarPage> {
                         _showCompleted = !_showCompleted;
                         break;
                       case 'sort':
-                      // Add sort logic here
+                        // Add sort logic here
                         break;
                     }
                   });
@@ -196,7 +208,8 @@ class _CalendarPageState extends State<CalendarPage> {
                     value: 'show_completed',
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_outline, color: Color(0xFF4A4380)),
+                        Icon(Icons.check_circle_outline,
+                            color: Color(0xFF4A4380)),
                         SizedBox(width: 12),
                         Text('Show Completed'),
                         Spacer(),
@@ -215,8 +228,9 @@ class _CalendarPageState extends State<CalendarPage> {
                       ],
                     ),
                   ),
-                ]                    ,
-              )],
+                ],
+              )
+            ],
           ),
           SizedBox(height: 20),
           Text(displayDateString,
@@ -224,7 +238,9 @@ class _CalendarPageState extends State<CalendarPage> {
           SizedBox(height: 5),
           Text('Calendar',
               style: TextStyle(
-                  color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
