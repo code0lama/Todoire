@@ -47,7 +47,7 @@ class LoginScreen extends StatelessWidget {
                 Navigator.pushReplacementNamed(context, '/dashboard');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5A4FCF),
+                backgroundColor: const Color(0xFF4A4380),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text("Log in", style: TextStyle(color: Colors.white,fontSize:17),),
@@ -80,7 +80,7 @@ class LoginScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: const Color(0xFF5A4FCF),
+          color: const Color(0xFF4A4380),
           borderRadius: BorderRadius.circular(16),
         ),
         child: const Icon(Icons.check, color: Colors.white, size: 48),

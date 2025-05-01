@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  final Color purpleColor = const Color(0xFF5A4FCF);
+  final Color purpleColor = const Color(0xFF4A4380);
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class DashboardScreen extends StatelessWidget {
                 const CircleAvatar(
                   radius: 25,
                   backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Color(0xFF5A4FCF)),
+                  child: Icon(Icons.person, color: Color(0xFF4A4380)),
                 ),
                 const SizedBox(width: 15),
                 Column(
@@ -65,9 +65,9 @@ class DashboardScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildViewButton(Icons.list, "List", const Color(0xFF5A4FCF),context,),
+                _buildViewButton(Icons.list, "List", const Color(0xFF4A4380),context,),
                 const SizedBox(width: 20),
-                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF5A4FCF),context),
+                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF4A4380),context),
               ],
             ),
           ),

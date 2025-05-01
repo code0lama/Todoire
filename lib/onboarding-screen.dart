@@ -16,7 +16,7 @@ class OnboardingScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF5A4FCF),
+                    color: const Color(0xFF4A4380),
                     borderRadius: BorderRadius.circular(25),
                   ),
                   child: const Icon(Icons.check, color: Colors.white, size: 65),
@@ -53,7 +53,7 @@ class OnboardingScreen extends StatelessWidget {
                   Navigator.pushReplacementNamed(context, '/signup');
                 },
                 child: CircleAvatar(
-                  backgroundColor: const Color(0xFF5A4FCF),
+                  backgroundColor: const Color(0xFF4A4380),
                   radius: 40,
                   child: const Icon(Icons.arrow_forward, color: Colors.white),
                 ),
