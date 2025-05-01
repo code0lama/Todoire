@@ -24,6 +24,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) => const DashboardScreen(),
         '/taskscreen': (context) =>  TaskScreen(),
+        '/calender': (context) => CalendarPage(),
         // Added dashboard route
       },
       title: 'Todoire',
@@ -455,7 +456,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   icon: Icon(Icons.grid_view_rounded, color: iconColor, size: 28),
                   tooltip: 'Menu (Placeholder)', // Add tooltip
                   onPressed: () {
-                    // Placeholder for potential side menu or other action
+                    Navigator.pushReplacementNamed(context, '/dashboard');
                   }),
               Expanded( // Allow search bar to take available space
                 child: Container(
@@ -624,4 +625,3 @@ class _TaskScreenState extends State<TaskScreen> {
     );
   }
 }
-

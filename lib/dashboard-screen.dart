@@ -65,9 +65,9 @@ class DashboardScreen extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildViewButton(Icons.list, "List", const Color(0xFF5A4FCF)),
+                _buildViewButton(Icons.list, "List", const Color(0xFF5A4FCF),context,),
                 const SizedBox(width: 20),
-                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF5A4FCF)),
+                _buildViewButton(Icons.calendar_today_outlined, "Calendar", const Color(0xFF5A4FCF),context),
               ],
             ),
           ),
@@ -89,25 +89,35 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildViewButton(IconData icon, String label, Color iconColor) {
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
+  Widget _buildViewButton(IconData icon, String label, Color iconColor, BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        if (label == 'List') {
+          Navigator.pushReplacementNamed(context, '/taskscreen');
+        } else if (label == 'Calendar') {
+          Navigator.pushReplacementNamed(context, '/calender');
+        }
+      },
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Icon(icon, color: iconColor, size: 36),
           ),
-          padding: const EdgeInsets.all(24),
-          child: Icon(icon, color: iconColor, size: 36),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
-        ),
-      ],
+          const SizedBox(height: 10),
+          Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16),
+          ),
+        ],
+      ),
     );
   }
+
 
   Widget _buildSectionTitle(String title) {
     return Padding(
