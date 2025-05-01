@@ -7,6 +7,10 @@ import 'onboarding-screen.dart';
 import 'signup-screen.dart';
 import 'dashboard-screen.dart';
 import 'TaskModel.dart';
+import 'package:flutter/foundation.dart';
+
+
+
 
 void main() {
   debugPaintSizeEnabled = false;
@@ -14,7 +18,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  final TaskModel t = TaskModel();
+  final TaskModel taskModelInstance = TaskModel();
+  MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -25,200 +30,316 @@ class MyApp extends StatelessWidget {
         '/': (context) => const OnboardingScreen(),
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
-        '/dashboard': (context) => DashboardScreen(taskModel: t),
-        '/taskscreen': (context) => TaskScreen(t),
-        '/calender': (context) => CalendarPage(taskModel: t),
-        // Added dashboard route
+        '/dashboard': (context) => DashboardScreen(taskModel: taskModelInstance),
+        '/taskscreen': (context) => TaskScreen(taskModelInstance),
+        '/calender': (context) => CalendarPage(taskModel: taskModelInstance),
       },
       title: 'Todoire',
     );
   }
 }
 
+// *** REMOVE the enum definition from here ***
+// enum SortCriteria { dueDate, label }
+
 class TaskScreen extends StatefulWidget {
-  @override
   final TaskModel taskModel;
+  const TaskScreen(this.taskModel, {Key? key}) : super(key: key);
 
-  TaskScreen(this.taskModel);
-
+  @override
   _TaskScreenState createState() => _TaskScreenState();
 }
 
 class _TaskScreenState extends State<TaskScreen> {
   // --- State Variables ---
-  final Color primaryColor = Color(0xFF4A4380);
+  final Color primaryColor = const Color(0xFF4A4380);
   final Color searchBarColor = Colors.white30;
-  final Color addbutton = Color(0xFF4A4380);
-  final Color bottomNavBarColor = Color(0xFF4A4380);
+  final Color addbutton = const Color(0xFF4A4380);
+  final Color bottomNavBarColor = const Color(0xFF4A4380);
   final Color iconColor = Colors.white;
   final Color bottomIconColor = Colors.white;
-  final Color checkColor = Color(0xFF4A4380);
+  final Color checkColor = const Color(0xFF4A4380);
 
-  bool _showLabels = true; // Controls label visibility
-  bool _showCompleted = true; // Controls if completed tasks are shown
-  Set<int> completedTasks = {}; // Stores original indices of completed tasks
+  bool _showLabels = true;
+  bool _showCompleted = true;
+  Set<int> completedTasks = {};
+  SortCriteria _currentSort = SortCriteria.dueDate; // Enum is now known via import 'task_model.dart'
+  List<String> _completedTaskIdsBeforeSort = [];
   List<Map<String, dynamic>> get tasks => widget.taskModel.tasks;
 
-
-  // --- Methods ---
-
-  void _handleSort() {
-    // Add sorting logic here if needed in the future
-    print("Sort action triggered!");
-    // Example: Sort by date
-    // setState(() {
-    //   tasks.sort((a, b) => (a['date'] as DateTime).compareTo(b['date'] as DateTime));
-    //   // !! Important: After sorting, `completedTasks` indices might become invalid
-    //   // if they aren't tied to a stable ID. Consider using unique IDs per task
-    //   // and updating `completedTasks` to store IDs instead of indices if sorting is implemented.
-    // });
+  // --- Lifecycle Methods ---
+  @override
+  void initState() {
+    super.initState();
+    widget.taskModel.addListener(_onTaskModelChanged);
   }
 
-  Color getLabelColor(String label) {
-    switch (label) {
-      case 'Study':
-        return Colors.teal;
-      case 'Sports':
-        return Colors.orange;
-      case 'Work':
-        return Colors.indigo;
-      case 'Personal':
-        return Colors.pink;
-      default:
-        return Colors.grey;
+  @override
+  void dispose() {
+    widget.taskModel.removeListener(_onTaskModelChanged);
+    super.dispose();
+  }
+
+  // lib/main.dart (_TaskScreenState)
+
+  // Callback when TaskModel notifies listeners
+  void _onTaskModelChanged() {
+    // When the model changes (add, remove, sort), rebuild the UI
+    // We still need to recalculate completed indices if the list order changed.
+    _recalculateCompletedIndices();
+
+    // *** ADD THIS: Ensure setState is called to rebuild the widget tree ***
+    // This makes the screen redraw with the latest data from widget.taskModel.tasks
+    if (mounted) { // Good practice: check if the widget is still in the tree
+      setState(() {});
     }
   }
 
-  void _showAddTaskBottomSheet(BuildContext context) {
+  // Recalculate completed indices based on stored references/IDs after a model change
+  void _recalculateCompletedIndices() {
+    // If _completedTaskIdsBeforeSort is empty, it means the change likely wasn't a sort
+    // initiated by this screen, but maybe an add/remove. We still need to check indices.
+    // A robust way is to always recalculate based on IDs if available.
+
+    Set<int> newCompletedTasks = {};
+    List<Map<String, dynamic>> currentTasks = widget.taskModel.tasks; // Get current list
+
+    // If we have stored IDs (meaning a sort/delete/undo just happened locally)
+    // OR if we always want to recalculate based on some persisted completion state in the model (ideal)
+    // For now, we use the temporary IDs stored before the operation:
+    if (_completedTaskIdsBeforeSort.isNotEmpty) {
+      for (int i = 0; i < currentTasks.length; i++) {
+        if (currentTasks[i]['id'] != null && _completedTaskIdsBeforeSort.contains(currentTasks[i]['id'])) {
+          newCompletedTasks.add(i);
+        }
+      }
+    } else {
+      // If no sort/delete happened locally, just preserve existing indices
+      // This assumes adding/removing doesn't require index recalculation based on IDs
+      // This part is less robust and highlights why storing completed state by ID is better.
+      // For now, we'll just keep the existing set if no IDs were stored.
+      newCompletedTasks = Set.from(completedTasks); // Keep existing if no sort IDs
+    }
+
+
+    // Update the state *only if* the set has actually changed.
+    if (!setEquals(completedTasks, newCompletedTasks)) {
+      // If we're already in _onTaskModelChanged which calls setState,
+      // we might not need another setState *here*. Let the main setState handle it.
+      // However, updating the state variable itself is crucial.
+      completedTasks = newCompletedTasks;
+    }
+
+    // Clear the temporary storage regardless
+    _completedTaskIdsBeforeSort = [];
+  }
+
+  // --- Methods ---
+
+
+  void _handleSortSelection(SortCriteria criteria) {
+    _completedTaskIdsBeforeSort = completedTasks
+        .where((index) => index >= 0 && index < tasks.length && tasks[index]['id'] != null)
+        .map((index) => tasks[index]['id'] as String)
+        .toList();
+
+    setState(() {
+      _currentSort = criteria;
+    });
+    widget.taskModel.sortTasks(criteria); // Model listener will handle index recalculation
+  }
+
+  Color getLabelColor(String label) { /* ... unchanged ... */
+    switch (label) {
+      case 'Study': return Colors.teal;
+      case 'Sports': return Colors.orange;
+      case 'Work': return Colors.indigo;
+      case 'Personal': return Colors.pink;
+      default: return Colors.grey;
+    }
+  }
+  void _showAddTaskBottomSheet(BuildContext context) { /* ... unchanged ... */
     String newTask = '';
     DateTime? selectedDate;
     String? selectedLabel;
 
     showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) {
+    return Padding(
+    padding: EdgeInsets.only(
+    top: 20, left: 20, right: 20,
+    bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+    ),
+    child: StatefulBuilder(
+    builder: (context, setModalState) {
+    return Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+    TextField(
+    autofocus: true,
+    decoration: InputDecoration(
+    hintText: 'What would you like to do?',
+    border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    ),
+    ),
+    onChanged: (value) {
+    newTask = value;
+    },
+    ),
+    const SizedBox(height: 15),
+    GestureDetector(
+    onTap: () async {
+    DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: selectedDate ?? DateTime.now(),
+    firstDate: DateTime(2020),
+    lastDate: DateTime(2100),
+    );
+    if (picked != null) {
+    setModalState(() {
+    selectedDate = picked;
+    });
+    }
+    },
+    child: Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+    border: Border.all(color: Colors.grey),
+    borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+    selectedDate == null
+    ? 'Select a date'
+        : DateFormat('EEEE, dd MMM yyyy').format(selectedDate!),
+    style: TextStyle(
+    color: selectedDate == null ? Colors.grey[600] : Colors.black
+    ),
+    ),
+    ),
+    ),
+    const SizedBox(height: 15),
+    DropdownButtonFormField<String>(
+    decoration: InputDecoration(
+    labelText: 'Label',
+    border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(12),
+    ),
+    ),
+    value: selectedLabel,
+    items: ['Study', 'Sports', 'Work', 'Personal']
+        .map((label) => DropdownMenuItem(
+    value: label,
+    child: Text(label),
+    ))
+        .toList(),
+    onChanged: (value) {
+    setModalState(() {
+    selectedLabel = value;
+    });
+    },
+    hint: const Text('Select a label'),
+    ),
+    const SizedBox(height: 20),
+    Align(
+    alignment: Alignment.centerRight,
+    child: ElevatedButton(
+    onPressed: (newTask.trim().isNotEmpty &&
+    selectedDate != null &&
+    selectedLabel != null)
+    ? () {
+    widget.taskModel.addTask(
+    title: newTask.trim(),
+    date: selectedDate!,
+    label: selectedLabel!,
+    );
+    Navigator.pop(context);
+    }
+        : null,
+    style: ElevatedButton.styleFrom(
+    shape: const CircleBorder(),
+    padding: const EdgeInsets.all(14),
+    backgroundColor: primaryColor,
+    disabledBackgroundColor: Colors.grey,
+    ),
+    child: const Icon(Icons.arrow_upward, color: Colors.white),
+    ),
+    )
+    ],
+    );
+    },
+    ),
+    );
+    });
+  }
+  void _showSortOptionsSheet(BuildContext context) { /* ... unchanged ... */
+    showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Allows sheet to take more height
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          // Add padding to avoid keyboard overlap
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: StatefulBuilder(
-            // Needed for date/label updates inside sheet
-            builder: (context, setModalState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min, // Take only needed height
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextField(
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'What would you like to do?',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onChanged: (value) {
-                      newTask = value;
-                    },
-                  ),
-                  SizedBox(height: 15),
-                  GestureDetector(
-                    onTap: () async {
-                      DateTime? picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        setModalState(() {
-                          // Use setModalState to update sheet UI
-                          selectedDate = picked;
-                        });
-                      }
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        selectedDate == null
-                            ? 'Select a date'
-                            : DateFormat('EEEE, dd MMM yyyy')
-                                .format(selectedDate!), // Format date nicely
-                        style: TextStyle(
-                            color: selectedDate == null
-                                ? Colors.grey[600]
-                                : Colors.black),
-                      ),
+                  Text(
+                    'Sort by',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
                     ),
                   ),
-                  SizedBox(height: 15),
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      labelText: 'Label',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    value: selectedLabel,
-                    items: ['Study', 'Sports', 'Work', 'Personal']
-                        .map((label) => DropdownMenuItem(
-                              value: label,
-                              child: Text(label),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      setModalState(() {
-                        // Use setModalState
-                        selectedLabel = value;
-                      });
-                    },
-                    hint: Text('Select a label'), // Add hint text
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.grey[600]),
+                    onPressed: () => Navigator.pop(context),
+                    tooltip: 'Close',
                   ),
-                  SizedBox(height: 20),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton(
-                      onPressed: (newTask.trim().isNotEmpty &&
-                              selectedDate != null &&
-                              selectedLabel != null)
-                          ? () {
-                              // Enable button only when fields are filled
-                              setState(() {
-                                // Use main setState to update the main list
-                                widget.taskModel.tasks.add({
-                                  'title': newTask.trim(),
-                                  'date': selectedDate!,
-                                  'label': selectedLabel!,
-                                });
-
-                              });
-                              Navigator.pop(context); // Close the bottom sheet
-                            }
-                          : null, // Disable button if conditions not met
-                      style: ElevatedButton.styleFrom(
-                        shape: CircleBorder(),
-                        padding: EdgeInsets.all(14),
-                        backgroundColor: Color(0xFF4A4380),
-                        disabledBackgroundColor:
-                            Colors.grey, // Style for disabled state
-                      ),
-                      child: Icon(Icons.arrow_upward, color: Colors.white),
-                    ),
-                  )
                 ],
-              );
-            },
+              ),
+              const SizedBox(height: 15),
+              RadioListTile<SortCriteria>(
+                title: const Text('Due Date'),
+                value: SortCriteria.dueDate,
+                groupValue: _currentSort, // Read current sort state
+                onChanged: (SortCriteria? value) {
+                  if (value != null && value != _currentSort) {
+                    _handleSortSelection(value); // Handle the sort process
+                  }
+                  Navigator.pop(context); // Close sheet
+                },
+                secondary: Icon(Icons.calendar_today_outlined, color: primaryColor),
+                activeColor: primaryColor,
+                contentPadding: EdgeInsets.zero,
+              ),
+              RadioListTile<SortCriteria>(
+                title: const Text('Label'),
+                value: SortCriteria.label,
+                groupValue: _currentSort, // Read current sort state
+                onChanged: (SortCriteria? value) {
+                  if (value != null && value != _currentSort) {
+                    _handleSortSelection(value); // Handle the sort process
+                  }
+                  Navigator.pop(context); // Close sheet
+                },
+                secondary: Icon(Icons.label_outline, color: primaryColor),
+                activeColor: primaryColor,
+                contentPadding: EdgeInsets.zero,
+              ),
+              const SizedBox(height: 10),
+            ],
           ),
         );
       },
@@ -227,276 +348,202 @@ class _TaskScreenState extends State<TaskScreen> {
 
   // --- Build Method ---
   @override
-  Widget build(BuildContext context) {
-    // Filter tasks based on _showCompleted status BEFORE building the list
+  Widget build(BuildContext context) { /* ... (rest of build and helper widgets unchanged) ... */
+    // Filter list for display based on current tasks state and filter flags
     List<Map<String, dynamic>> displayedTaskEntries = tasks
-        .asMap() // Get tasks with their original indices {0: task1, 1: task2, ...}
-        .entries // Convert to iterable entries [MapEntry(0, task1), MapEntry(1, task2), ...]
+        .asMap()
+        .entries
         .where((entry) {
-          int originalIndex = entry.key;
-          bool isCompleted = completedTasks.contains(originalIndex);
-          // Keep task if: showing completed tasks OR the task is not completed
-          return _showCompleted || !isCompleted;
-        })
+      int currentIndex = entry.key; // Index in the CURRENT list state
+      bool isCompleted = completedTasks.contains(currentIndex); // Check using current indices
+      return _showCompleted || !isCompleted;
+    })
         .map((entry) => {
-              'originalIndex': entry.key, // Store the original index
-              'taskData': entry.value, // Store the task map itself
-            })
-        .toList(); // Convert back to a List
+      'currentIndex': entry.key, // Current index for interactions in this build
+      'taskData': entry.value,
+    })
+        .toList();
+
 
     return Scaffold(
       backgroundColor: Colors.grey[300],
       body: Column(
         children: [
-          _buildHeader(context), // Build the top header section
+          _buildHeader(context),
           Expanded(
             child: displayedTaskEntries.isEmpty
                 ? Center(
-                    child: Text(_showCompleted
-                        ? 'No tasks yet. Tap + to add one!'
-                        : 'No pending tasks.')) // Different message based on filter
+                child: Text(_showCompleted
+                    ? 'No tasks yet. Tap + to add one!'
+                    : 'No pending tasks.'))
                 : ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                    // Adjusted padding
-                    itemCount: displayedTaskEntries.length,
-                    // Use the filtered list length
-                    itemBuilder: (context, displayedIndex) {
-                      // Get the original index and task data for this item in the filtered list
-                      final entry = displayedTaskEntries[displayedIndex];
-                      final int originalIndex = entry['originalIndex'] as int;
-                      final Map<String, dynamic> taskData =
-                          entry['taskData'] as Map<String, dynamic>;
-                      final bool isCurrentlyCompleted = completedTasks.contains(
-                          originalIndex); // Check completion using original index
+              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+              itemCount: displayedTaskEntries.length,
+              itemBuilder: (context, displayedIndex) {
+                final entry = displayedTaskEntries[displayedIndex];
+                final int currentIndex = entry['currentIndex'] as int;
+                final Map<String, dynamic> taskData = entry['taskData'] as Map<String, dynamic>;
+                final bool isCurrentlyCompleted = completedTasks.contains(currentIndex);
+                final String taskId = taskData['id'] ?? ''; // Get ID for stable key
 
-                      return Dismissible(
-                        // Key needs to be unique, using original index helps
-                        key: ValueKey('task_$originalIndex'),
-                        // More robust key
-                        direction: DismissDirection.endToStart,
-                        // Allow swipe from right to left only
-                        onDismissed: (direction) {
-                          // --- Deletion Logic ---
-                          final removedTaskData = Map<String, dynamic>.from(
-                              taskData); // Copy data before removal
-                          final bool wasCompleted = completedTasks.contains(
-                              originalIndex); // Store completion state before removal
+                return Dismissible(
+                  key: ValueKey('task_$taskId'), // Use stable ID for key
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    final removedTaskData = Map<String, dynamic>.from(taskData);
+                    final bool wasCompleted = completedTasks.contains(currentIndex);
+                    final int removedIndex = currentIndex; // Index at time of dismissal
+                    final String removedTaskId = taskId; // Store ID
 
-                          setState(() {
-                            // 1. Remove from the master tasks list
-                            //    Find the actual current index in `tasks` to remove reliably.
-                            int indexInMasterList = tasks.indexWhere((t) =>
-                                t ==
-                                taskData); // Find by reference or unique ID if available
-                            if (indexInMasterList != -1) {
-                              tasks.removeAt(indexInMasterList);
-                            } else {
-                              print(
-                                  "Error: Task to delete not found in master list.");
-                              // Optionally show an error message to the user
-                              return; // Prevent further action if task not found
+                    // --- Store IDs of remaining completed tasks BEFORE model update ---
+                    _completedTaskIdsBeforeSort = completedTasks
+                        .where((idx) => idx != removedIndex && idx >= 0 && idx < tasks.length) // Ensure valid index BEFORE removal
+                        .map((idx) => tasks[idx]['id'] as String) // Map to ID
+                        .toList();
+
+
+                    // --- Perform Deletion via Model ---
+                    widget.taskModel.removeTaskAt(removedIndex);
+                    // The listener (_onTaskModelChanged) will eventually call _recalculateCompletedIndices
+
+                    // --- Show SnackBar with Undo ---
+                    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("'${removedTaskData['title']}' deleted"),
+                        backgroundColor: Colors.redAccent,
+                        behavior: SnackBarBehavior.floating,
+                        action: SnackBarAction(
+                          label: "UNDO",
+                          textColor: Colors.white,
+                          onPressed: () {
+                            // --- Store IDs before UNDO insertion ---
+                            _completedTaskIdsBeforeSort = completedTasks
+                                .where((idx) => idx >= 0 && idx < tasks.length) // Indices in the list *before* insertion
+                                .map((idx) => tasks[idx]['id'] as String)
+                                .toList();
+                            if (wasCompleted) { // Add back the ID of the task being undone if it was completed
+                              _completedTaskIdsBeforeSort.add(removedTaskId);
                             }
 
-                            // 2. Update `completedTasks` set:
-                            //    Remove the original index if present.
-                            //    Adjust indices greater than the removed task's index in the MASTER list.
-                            Set<int> updatedCompletedTasks = {};
-                            if (completedTasks.contains(originalIndex)) {
-                              completedTasks
-                                  .remove(originalIndex); // Remove it first
-                            }
-
-                            // Adjust remaining indices based on the index where removal happened in `tasks`
-                            for (int completedIdx in completedTasks) {
-                              if (completedIdx > indexInMasterList) {
-                                // Use index from master list for comparison
-                                updatedCompletedTasks.add(completedIdx - 1);
-                              } else {
-                                updatedCompletedTasks.add(completedIdx);
-                              }
-                            }
-                            completedTasks =
-                                updatedCompletedTasks; // Assign the updated set
-                          });
-                          // --- End Deletion ---
-
-                          // --- Show SnackBar with Undo ---
-                          ScaffoldMessenger.of(context)
-                              .removeCurrentSnackBar(); // Remove any existing snackbar
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content:
-                                  Text("'${removedTaskData['title']}' deleted"),
-                              // Show task title
-                              backgroundColor: Colors.redAccent,
-                              behavior: SnackBarBehavior.floating,
-                              // Optional: Make it float
-                              action: SnackBarAction(
-                                label: "UNDO",
-                                textColor: Colors.white,
-                                onPressed: () {
-                                  // --- Undo Logic ---
-                                  setState(() {
-                                    // 1. Re-insert the task into the master list. Try original index, clamped for safety.
-                                    int insertIndex = originalIndex;
-                                    if (insertIndex > tasks.length)
-                                      insertIndex = tasks.length;
-                                    if (insertIndex < 0)
-                                      insertIndex = 0; // Clamp index
-
-                                    tasks.insert(insertIndex, removedTaskData);
-
-                                    // 2. Restore completion status & adjust `completedTasks` indices
-                                    //    Shift indices >= insertion point upwards.
-                                    Set<int> restoredCompletedTasks = {};
-                                    for (int completedIdx in completedTasks) {
-                                      if (completedIdx >= insertIndex) {
-                                        restoredCompletedTasks
-                                            .add(completedIdx + 1);
-                                      } else {
-                                        restoredCompletedTasks
-                                            .add(completedIdx);
-                                      }
-                                    }
-                                    // Add the original index back if it was completed
-                                    if (wasCompleted) {
-                                      restoredCompletedTasks.add(insertIndex);
-                                    }
-                                    completedTasks =
-                                        restoredCompletedTasks; // Assign the restored set
-                                  });
-                                  // --- End Undo ---
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        // Background shown during swipe
-                        background: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.redAccent,
-                            borderRadius:
-                                BorderRadius.circular(16), // Match card shape
-                          ),
-                          margin: EdgeInsets.symmetric(vertical: 10),
-                          // Match card's vertical margin
-                          padding: EdgeInsets.symmetric(horizontal: 20),
-                          alignment: Alignment.centerRight,
-                          child: Icon(
-                            Icons.delete_forever,
-                            color: Colors.white,
-                            size: 30,
-                          ),
+                            // --- Perform Undo via Model ---
+                            widget.taskModel.insertTask(removedIndex, removedTaskData);
+                            // Listener will handle list update and trigger recalculation
+                          },
                         ),
-                        // The actual task card
-                        child: Card(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 3,
-                          margin: EdgeInsets.symmetric(vertical: 10),
-                          // Increased vertical margin makes cards distinct
-                          child: ListTile(
-                            contentPadding: EdgeInsets.symmetric(
-                                horizontal: 15, vertical: 10),
-                            // Increased vertical padding
-                            leading: Checkbox(
-                              value: isCurrentlyCompleted,
-                              // Use completion status based on original index
-                              onChanged: (bool? value) {
-                                setState(() {
-                                  // Update `completedTasks` using the ORIGINAL index
-                                  if (value == true) {
-                                    completedTasks.add(originalIndex);
-                                  } else {
-                                    completedTasks.remove(originalIndex);
-                                  }
-                                  // If filtering is active, removing completion might instantly hide the task if _showCompleted is false
-                                });
-                              },
-                              activeColor: checkColor,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      4)), // Slightly rounded checkbox
-                            ),
-                            title: Text(
-                              taskData['title'],
-                              style: TextStyle(
-                                color: primaryColor,
-                                // Use primary color for title
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
-                                decoration: isCurrentlyCompleted
-                                    ? TextDecoration
-                                        .lineThrough // Apply strikethrough if completed
-                                    : TextDecoration.none,
-                                decorationColor: primaryColor.withOpacity(0.7),
-                                // Optional: Dimmer strikethrough
-                                decorationThickness: 1.5,
-                              ),
-                            ),
-                            subtitle: Text(
-                              DateFormat('dd MMM yyyy')
-                                  .format(taskData['date']),
-                              // Format date nicely
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey[700]),
-                            ),
-                            trailing: _showLabels
-                                ? Container(
-                                    // Conditionally display label based on _showLabels flag
-                                    padding: EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: getLabelColor(taskData['label'])
-                                          .withOpacity(
-                                              0.25), // More defined background
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      taskData['label'],
-                                      style: TextStyle(
-                                        color: getLabelColor(taskData['label']),
-                                        // Keep label text color solid
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  )
-                                : null, // Show nothing if labels are hidden
-                          ),
-                        ),
-                      );
-                    },
+                      ),
+                    );
+                  },
+                  background: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    alignment: Alignment.centerRight,
+                    child: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
+                  child: Card(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 10),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 10),
+                      leading: Checkbox(
+                        value: isCurrentlyCompleted,
+                        onChanged: (bool? value) {
+                          // --- Update local completed set immediately for responsiveness ---
+                          // The definitive recalculation will happen in _onTaskModelChanged if needed
+                          setState(() {
+                            if (value == true) {
+                              completedTasks.add(currentIndex);
+                            } else {
+                              completedTasks.remove(currentIndex);
+                            }
+                          });
+                          // --- Update stored IDs for potential subsequent operations ---
+                          _completedTaskIdsBeforeSort = completedTasks
+                              .where((idx) => idx >= 0 && idx < tasks.length)
+                              .map((idx) => tasks[idx]['id'] as String)
+                              .toList();
+
+                          // Optional: Persist completion state via model if necessary
+                          // widget.taskModel.updateTaskCompletion(taskId, value ?? false);
+                        },
+                        activeColor: checkColor,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                      ),
+                      title: Text(
+                        taskData['title'],
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          decoration: isCurrentlyCompleted
+                              ? TextDecoration.lineThrough
+                              : TextDecoration.none,
+                          decorationColor: primaryColor.withOpacity(0.7),
+                          decorationThickness: 1.5,
+                        ),
+                      ),
+                      subtitle: Text(
+                        DateFormat('dd MMM yyyy').format(taskData['date']),
+                        style: TextStyle(
+                            fontSize: 14, color: Colors.grey[700]),
+                      ),
+                      trailing: _showLabels
+                          ? Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: getLabelColor(taskData['label']).withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          taskData['label'],
+                          style: TextStyle(
+                            color: getLabelColor(taskData['label']),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )
+                          : null,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
-      // --- Floating Action Button ---
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _showAddTaskBottomSheet(context);
         },
-        child: Icon(Icons.add, size: 30, color: Colors.white),
         backgroundColor: addbutton,
-        shape: CircleBorder(), // Make it circular
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, size: 30, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      // Dock it in the middle
-      // --- Bottom Navigation Bar ---
       bottomNavigationBar: _buildBottomNavBar(context),
     );
   }
 
-  // --- Helper Widgets ---
-
-  Widget _buildHeader(BuildContext context) {
-    double topPadding =
-        MediaQuery.of(context).padding.top; // Get safe area top padding
+  Widget _buildHeader(BuildContext context) { /* ... unchanged ... */
+    double topPadding = MediaQuery.of(context).padding.top;
     final now = DateTime.now();
-    final formattedDate =
-        DateFormat('d MMM').format(now); // Format like "30 Apr"
+    final formattedDate = DateFormat('d MMM').format(now);
     final String displayDateString = 'Today, $formattedDate';
 
     return Container(
@@ -504,16 +551,15 @@ class _TaskScreenState extends State<TaskScreen> {
           top: topPadding + 15, left: 20, right: 20, bottom: 20),
       decoration: BoxDecoration(
         color: primaryColor,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(30),
           bottomRight: Radius.circular(30),
         ),
         boxShadow: [
-          // Optional: Add a subtle shadow
           BoxShadow(
               color: Colors.black.withOpacity(0.15),
               blurRadius: 10,
-              offset: Offset(0, 5))
+              offset: const Offset(0, 5))
         ],
       ),
       child: Column(
@@ -523,37 +569,29 @@ class _TaskScreenState extends State<TaskScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                  icon:
-                      Icon(Icons.grid_view_rounded, color: iconColor, size: 28),
-                  tooltip: 'Menu (Placeholder)', // Add tooltip
+                  icon: Icon(Icons.grid_view_rounded, color: iconColor, size: 28),
+                  tooltip: 'Dashboard',
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/dashboard');
                   }),
               Expanded(
-                // Allow search bar to take available space
                 child: Container(
                   height: 40,
-                  // Give search bar a fixed height
-                  margin: EdgeInsets.symmetric(horizontal: 15),
-                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  margin: const EdgeInsets.symmetric(horizontal: 15),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
                   decoration: BoxDecoration(
                     color: searchBarColor,
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: TextField(
-                    style: TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                        icon: Icon(Icons.search,
-                            color: iconColor.withOpacity(0.8)),
+                        icon: Icon(Icons.search, color: iconColor.withOpacity(0.8)),
                         hintText: 'Search Tasks...',
-                        // More specific hint
                         hintStyle: TextStyle(color: iconColor.withOpacity(0.7)),
                         border: InputBorder.none,
-                        // Remove underline
-                        contentPadding: EdgeInsets.only(
-                            bottom: 10) // Adjust vertical alignment
-                        ),
-                    // Add TextEditingController and onChanged for actual search functionality later
+                        contentPadding: const EdgeInsets.only(bottom: 10)
+                    ),
                   ),
                 ),
               ),
@@ -561,35 +599,29 @@ class _TaskScreenState extends State<TaskScreen> {
                 icon: Icon(Icons.more_horiz, color: iconColor, size: 28),
                 tooltip: 'More Options',
                 color: Colors.white,
-                // Background color of the menu
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.0)),
                 elevation: 4,
                 onSelected: (String result) {
-                  // Update state based on selection, triggering a rebuild
-                  setState(() {
-                    switch (result) {
-                      case 'show_label':
-                        _showLabels = !_showLabels;
-                        break;
-                      case 'show_completed':
-                        _showCompleted = !_showCompleted;
-                        break;
-                      case 'sort':
-                        _handleSort(); // Call the sort handler
-                        break;
-                    }
-                  });
+                  switch (result) {
+                    case 'show_label':
+                      setState(() => _showLabels = !_showLabels);
+                      break;
+                    case 'show_completed':
+                      setState(() => _showCompleted = !_showCompleted);
+                      break;
+                    case 'sort':
+                      _showSortOptionsSheet(context); // Show the sort sheet
+                      break;
+                  }
                 },
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
                   _buildPopupMenuItem(
-                      // Build menu item using helper
                       context: context,
                       icon: Icons.label_outline,
                       title: 'Show Labels',
                       value: 'show_label',
                       showCheck: _showLabels,
-                      // Pass current state for checkmark
                       checkColor: checkColor),
                   _buildPopupMenuItem(
                       context: context,
@@ -597,24 +629,22 @@ class _TaskScreenState extends State<TaskScreen> {
                       title: 'Show Completed',
                       value: 'show_completed',
                       showCheck: _showCompleted,
-                      // Pass current state
                       checkColor: checkColor),
-                  PopupMenuDivider(), // Optional divider
+                  const PopupMenuDivider(),
                   _buildPopupMenuItem(
                       context: context,
                       icon: Icons.sort,
                       title: 'Sort',
                       value: 'sort',
-                      showCheck: false), // Sort doesn't need a checkmark
+                      showCheck: false),
                 ],
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Text(displayDateString,
-              style:
-                  TextStyle(color: iconColor.withOpacity(0.8), fontSize: 14)),
-          SizedBox(height: 5),
+              style: TextStyle(color: iconColor.withOpacity(0.8), fontSize: 14)),
+          const SizedBox(height: 5),
           Text('My Tasks',
               style: TextStyle(
                   color: iconColor, fontSize: 28, fontWeight: FontWeight.bold)),
@@ -622,94 +652,59 @@ class _TaskScreenState extends State<TaskScreen> {
       ),
     );
   }
-
-  // --- Single Definition for PopupMenuItem Builder ---
-  // --- Updated PopupMenuItem Builder ---
-  PopupMenuItem<String> _buildPopupMenuItem({
+  PopupMenuItem<String> _buildPopupMenuItem({ /* ... unchanged ... */
     required BuildContext context,
     required IconData icon,
     required String title,
     required String value,
-    required bool showCheck, // Required parameter
+    required bool showCheck,
     Color? checkColor,
   }) {
-    final Color activeColor =
-        primaryColor; // Color for icons and potentially text
-    final Color textColor =
-        Colors.black87; // Or use primaryColor if you prefer purple text
+    final Color activeColor = primaryColor;
+    final Color textColor = Colors.black87;
 
     return PopupMenuItem<String>(
       value: value,
-      // Add padding within each menu item for better spacing
-      padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: activeColor, // Use the defined active color
-            size: 22, // Slightly smaller icon size
-          ),
-          SizedBox(width: 16), // Increase spacing between icon and text
+          Icon( icon, color: activeColor, size: 22),
+          const SizedBox(width: 16),
           Text(
             title,
-            style: TextStyle(
-              color: textColor, // Use defined text color
-              fontSize: 16, // Slightly larger text
-              // fontWeight: FontWeight.w500, // Optional: Make text slightly bolder
-            ),
+            style: TextStyle( color: textColor, fontSize: 16),
           ),
-          Spacer(), // Pushes the check icon to the far right
+          const Spacer(),
           if (showCheck)
             Padding(
-              // Add padding around the check icon if needed
               padding: const EdgeInsets.only(left: 8.0),
-              child: Icon(
-                Icons.check,
-                color: checkColor ?? activeColor, // Use active color for check
-                size: 22,
-              ),
+              child: Icon( Icons.check, color: checkColor ?? activeColor, size: 22),
             ),
         ],
       ),
     );
   }
-
-  Widget _buildBottomNavBar(BuildContext context) {
+  Widget _buildBottomNavBar(BuildContext context) { /* ... unchanged ... */
     return BottomAppBar(
       color: bottomNavBarColor,
-      shape: CircularNotchedRectangle(),
-      // Creates the notch for the FAB
+      shape: const CircularNotchedRectangle(),
       notchMargin: 8.0,
-      // Space around the FAB
       elevation: 8.0,
-      // Shadow below the bar
-      child: Container(
-        height: 65, // Standard height
+      child: SizedBox( // Use SizedBox for definite height
+        height: 65,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          // Space items evenly
           children: [
             IconButton(
-                icon: Icon(Icons.list_alt_outlined,
-                    color: bottomIconColor, size: 30),
+                icon: Icon(Icons.list_alt_outlined, color: bottomIconColor, size: 30),
                 tooltip: 'Tasks',
-                onPressed: () {
-                  // Already on tasks screen, or navigate here if needed
-                }),
-            SizedBox(width: 40),
-            // Placeholder to create space for the central FAB
+                onPressed: () { /* Already here */ }),
+            const SizedBox(width: 40), // Spacer for notch
             IconButton(
-              icon: Icon(Icons.calendar_today_outlined,
-                  color: bottomIconColor, size: 28),
+              icon: Icon(Icons.calendar_today_outlined, color: bottomIconColor, size: 28),
               tooltip: 'Calendar',
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        CalendarPage(taskModel: widget.taskModel),
-                  ),
-                );
+                Navigator.pushReplacementNamed(context, '/calender');
               },
             ),
           ],
