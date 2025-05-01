@@ -35,7 +35,10 @@ class _CalendarPageState extends State<CalendarPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))
+              ],
             ),
             child: TableCalendar(
               focusedDay: focusedDay,
@@ -75,7 +78,6 @@ class _CalendarPageState extends State<CalendarPage> {
                 titleCentered: true,
               ),
             ),
-
           ),
           SizedBox(height: 20),
           Divider(),
@@ -104,17 +106,20 @@ class _CalendarPageState extends State<CalendarPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                icon: Icon(Icons.list_alt_outlined, color: Colors.white.withOpacity(0.7), size: 30),
+                icon: Icon(Icons.list_alt_outlined,
+                    color: Colors.white.withOpacity(0.7), size: 30),
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => TaskScreen(widget.taskModel)),
+                    MaterialPageRoute(
+                        builder: (context) => TaskScreen(widget.taskModel)),
                   );
                 },
               ),
               SizedBox(width: 40),
               IconButton(
-                icon: Icon(Icons.calendar_today_outlined, color: Colors.white, size: 28),
+                icon: Icon(Icons.calendar_today_outlined,
+                    color: Colors.white, size: 28),
                 onPressed: () {},
               ),
             ],
@@ -130,7 +135,8 @@ class _CalendarPageState extends State<CalendarPage> {
     final formattedDate = DateFormat('d MMM').format(now);
 
     return Container(
-      padding: EdgeInsets.only(top: topPadding + 15, left: 20, right: 20, bottom: 20),
+      padding: EdgeInsets.only(
+          top: topPadding + 15, left: 20, right: 20, bottom: 20),
       decoration: BoxDecoration(
         color: Color(0xFF4A4380),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
@@ -141,7 +147,8 @@ class _CalendarPageState extends State<CalendarPage> {
           Row(
             children: [
               IconButton(
-                icon: Icon(Icons.grid_view_rounded, color: Colors.white, size: 28),
+                icon: Icon(Icons.grid_view_rounded,
+                    color: Colors.white, size: 28),
                 onPressed: () {
                   Navigator.pushReplacementNamed(context, '/dashboard');
                 },
@@ -157,9 +164,11 @@ class _CalendarPageState extends State<CalendarPage> {
                   child: TextField(
                     style: TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      icon: Icon(Icons.search, color: Colors.white.withOpacity(0.8)),
+                      icon: Icon(Icons.search,
+                          color: Colors.white.withOpacity(0.8)),
                       hintText: 'Search Tasks...',
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+                      hintStyle:
+                          TextStyle(color: Colors.white.withOpacity(0.8)),
                       border: InputBorder.none,
                     ),
                   ),
@@ -170,7 +179,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 onSelected: (String result) {
                   setState(() {
                     if (result == 'show_label') _showLabels = !_showLabels;
-                    if (result == 'show_completed') _showCompleted = !_showCompleted;
+                    if (result == 'show_completed')
+                      _showCompleted = !_showCompleted;
                   });
                 },
                 itemBuilder: (context) => [
@@ -182,7 +192,8 @@ class _CalendarPageState extends State<CalendarPage> {
                         SizedBox(width: 12),
                         Text('Show Label'),
                         Spacer(),
-                        if (_showLabels) Icon(Icons.check, color: Color(0xFF4A4380)),
+                        if (_showLabels)
+                          Icon(Icons.check, color: Color(0xFF4A4380)),
                       ],
                     ),
                   ),
@@ -190,11 +201,13 @@ class _CalendarPageState extends State<CalendarPage> {
                     value: 'show_completed',
                     child: Row(
                       children: [
-                        Icon(Icons.check_circle_outline, color: Color(0xFF4A4380)),
+                        Icon(Icons.check_circle_outline,
+                            color: Color(0xFF4A4380)),
                         SizedBox(width: 12),
                         Text('Show Completed'),
                         Spacer(),
-                        if (_showCompleted) Icon(Icons.check, color: Color(0xFF4A4380)),
+                        if (_showCompleted)
+                          Icon(Icons.check, color: Color(0xFF4A4380)),
                       ],
                     ),
                   ),
@@ -203,9 +216,14 @@ class _CalendarPageState extends State<CalendarPage> {
             ],
           ),
           SizedBox(height: 20),
-          Text('Today, $formattedDate', style: TextStyle(color: Colors.white70, fontSize: 14)),
+          Text('Today, $formattedDate',
+              style: TextStyle(color: Colors.white70, fontSize: 14)),
           SizedBox(height: 5),
-          Text('Calendar', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+          Text('Calendar',
+              style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -232,11 +250,12 @@ class _CalendarPageState extends State<CalendarPage> {
         final labelColor = _getLabelColor(task['label']);
         return Card(
           color: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 3,
           margin: EdgeInsets.symmetric(vertical: 8),
           child: ListTile(
-            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical:2),
+            contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 2),
             title: Text(
               task['title'],
               style: TextStyle(
@@ -251,20 +270,20 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             trailing: _showLabels
                 ? Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: labelColor.withOpacity(0.25),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                task['label'],
-                style: TextStyle(
-                  color: labelColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-            )
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: labelColor.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      task['label'],
+                      style: TextStyle(
+                        color: labelColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                  )
                 : null,
           ),
         );

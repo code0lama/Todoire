@@ -1,9 +1,5 @@
-// lib/task_model.dart
 import 'package:flutter/foundation.dart';
-
-// *** ADD the enum definition HERE ***
 enum SortCriteria { dueDate, label }
-
 class TaskModel extends ChangeNotifier {
   List<Map<String, dynamic>> _tasks = [
     // Example initial data:
@@ -46,7 +42,6 @@ class TaskModel extends ChangeNotifier {
     }
   }
 
-  // Sort method now uses the enum defined in THIS file
   void sortTasks(SortCriteria criteria) {
     switch (criteria) {
       case SortCriteria.dueDate:

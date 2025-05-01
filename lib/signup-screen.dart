@@ -77,7 +77,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   backgroundColor: const Color(0xFF4A4380),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                child: const Text("Sign up",style: TextStyle(color: Colors.white,fontSize:17),),
+                child: const Text(
+                  "Sign up",
+                  style: TextStyle(color: Colors.white, fontSize: 17),
+                ),
               ),
               const SizedBox(height: 20),
               const Center(child: Text("or sign up with")),
@@ -141,7 +144,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         _circleButton(Icons.facebook, Colors.blue),
-        _circleButton(Icons.g_mobiledata, Colors.red), // (can be improved later for real Google Icon)
+        _circleButton(Icons.g_mobiledata, Colors.red),
         _circleButton(Icons.apple, Colors.black),
       ],
     );

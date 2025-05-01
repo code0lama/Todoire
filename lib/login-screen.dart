@@ -22,7 +22,8 @@ class LoginScreen extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: "EMAIL ADDRESS",
                 suffixIcon: const Icon(Icons.check),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             const SizedBox(height: 20),
@@ -31,7 +32,8 @@ class LoginScreen extends StatelessWidget {
               decoration: InputDecoration(
                 labelText: "PASSWORD",
                 suffixIcon: const Icon(Icons.visibility_off),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
             Align(
@@ -43,14 +45,16 @@ class LoginScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                // Navigation to Dashboard after login
                 Navigator.pushReplacementNamed(context, '/dashboard');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4A4380),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
-              child: const Text("Log in", style: TextStyle(color: Colors.white,fontSize:17),),
+              child: const Text(
+                "Log in",
+                style: TextStyle(color: Colors.white, fontSize: 17),
+              ),
             ),
             const SizedBox(height: 20),
             const Center(child: Text("or log in with")),
@@ -65,7 +69,8 @@ class LoginScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.pushReplacementNamed(context, '/signup');
                   },
-                  child: const Text("Get started!", style: TextStyle(color: Colors.blue)),
+                  child: const Text("Get started!",
+                      style: TextStyle(color: Colors.blue)),
                 )
               ],
             )
