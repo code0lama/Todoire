@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/rendering.dart';
-import 'calender_page.dart'; // Ensure this import points to your CalendarPage file
+import 'calender_page.dart';
+import 'login-screen.dart';
+import 'onboarding-screen.dart';
+import 'signup-screen.dart';
+import 'dashboard-screen.dart';
 
 void main() {
   debugPaintSizeEnabled = false;
@@ -13,7 +17,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TaskScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const OnboardingScreen(),
+        '/signup': (context) => const SignUpScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/dashboard': (context) => const DashboardScreen(),
+        '/taskscreen': (context) =>  TaskScreen(),
+        // Added dashboard route
+      },
       title: 'Todoire',
     );
   }
