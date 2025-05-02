@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 enum SortCriteria { dueDate, label }
 class TaskModel extends ChangeNotifier {
+  
+
   List<Map<String, dynamic>> _tasks = [
     // Example initial data:
     // { 'id': '1', 'title': 'Finish Report', 'date': DateTime.now().add(const Duration(days: 1)), 'label': 'Work' },

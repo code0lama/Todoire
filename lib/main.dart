@@ -29,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignUpScreen(),
         '/login': (context) => const LoginScreen(),
         '/dashboard': (context) =>
+
             DashboardScreen(taskModel: taskModelInstance),
         '/taskscreen': (context) => TaskScreen(taskModelInstance),
         '/calender': (context) => CalendarPage(taskModel: taskModelInstance),
